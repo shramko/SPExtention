@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns:dm0="http://schemas.microsoft.com/VisualStudio/2008/DslTools/Core" dslVersion="1.0.0.0" Id="fa9c0658-d28d-4dc0-8864-587c998300fd" solutionId="fa9c0658-d28d-4dc0-8864-587c998300fd" resetWebServer="false" sharePointProductVersion="15.0" name="Test" xmlns="http://schemas.microsoft.com/VisualStudio/2008/SharePointTools/PackageModel">
+  <assemblies>
+    <projectOutputAssembly location="SPExtention.dll" deploymentTarget="GlobalAssemblyCache" projectPath="..\SPExtention\SPExtention\SPExtention.csproj">
+      <safeControls>
+        <safeControl assemblyName="SPExtention" namespaceName="SPExtention" typeName="*" isSafeAgainstScript="false" />
+      </safeControls>
+    </projectOutputAssembly>
+  </assemblies>
+  <features>
+    <featureReference itemId="b0c4639f-059b-451d-9eb6-9f7cc55ad63d" />
+  </features>
+</package>
