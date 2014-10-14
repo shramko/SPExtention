@@ -8,7 +8,7 @@ using SPExtention;
 
 namespace Test.List
 {
-    [InternalName("PopRequestsList"), DisplayName("Popular requests")]
+    [InternalName("PopRequestsList"), DisplayName("Popular requests"), ContentType("")]
     public class TestSpList : SPListExtention<TestSpList>
     {
         public TestSpList(SPWeb spWeb)
@@ -35,7 +35,7 @@ namespace Test.List
 
     public class TSPList : SPListExtention<TSPList>
     {
-        [DisplayName("Picture")]
+        [DisplayName("Picture"),Required]
         [FieldType(SPFieldType.Text)]
         string Picture1 { get; set; }
     }

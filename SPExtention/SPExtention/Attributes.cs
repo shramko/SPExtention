@@ -105,4 +105,33 @@ namespace SPExtention
         }
 
     }
+
+    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public class DefaultViewAttribute : System.Attribute
+    {
+        public DefaultViewAttribute(){}
+    }
+
+    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public class RequiredAttribute : System.Attribute
+    {
+        public RequiredAttribute() { }
+    }
+
+    //TODO:добавить в обработку 
+    [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    public class ContentTypeAttribute : System.Attribute
+    {
+        private string _contentTypeId;
+
+        public ContentTypeAttribute(string contentTypeId)
+        {
+            this._contentTypeId = contentTypeId;
+        }
+
+        public virtual string ContentTypeId
+        {
+            get { return _contentTypeId; }
+        }
+    }
 }

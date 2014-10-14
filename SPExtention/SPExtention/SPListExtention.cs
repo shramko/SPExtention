@@ -21,8 +21,6 @@ namespace SPExtention
         protected SPListExtention(SPWeb spWeb)
         {
             _spWeb = spWeb;
-            var spList = GetSPList(spWeb);
-            if (spList == null) return;
             PropertyInfo[] properties = typeof (T).GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.SetProperty);
             foreach (PropertyInfo prop in properties)
             {
@@ -135,9 +133,7 @@ namespace SPExtention
         public static SPList GetSPList(SPWeb spWeb)
         {
             if(spWeb == null) return null;
-            SPList spList = null;
-            spList = GetSPListByInternalName(spWeb) ?? GetSPListByDisplayName(spWeb);
-            return spList;
+            return GetSPListByInternalName(spWeb) ?? GetSPListByDisplayName(spWeb);
         }
         
         public static List<SPField> GetCustomFields(SPWeb spWeb)
@@ -174,6 +170,8 @@ namespace SPExtention
                     var fieldType = prop.GetCustomAttribute<FieldTypeAttribute>();
                     var internalXml = prop.GetCustomAttribute<InternalFieldXmlAttribute>();
                     var additionalAttr = prop.GetCustomAttributes<AdditionalFieldAttrAttribute>();
+                    var toDefaultView = prop.GetCustomAttribute<DefaultViewAttribute>() != null;
+                    var isRequired = prop.GetCustomAttribute<RequiredAttribute>() != null;
                     string parsedAdAttr = ParseAdditionalAttributes(additionalAttr);
                     if (fieldType == null) continue;
                     AddFieldToList( spList, 
@@ -181,7 +179,9 @@ namespace SPExtention
                                     prop.Name, 
                                     dispName != null ? dispName.Name : null,
                                     parsedAdAttr,
-                                    internalXml != null ? internalXml.InternalXml : string.Empty);
+                                    internalXml != null ? internalXml.InternalXml : string.Empty,
+                                    toDefaultView,
+                                    isRequired);
                 }
                 return null;
             }
@@ -192,9 +192,12 @@ namespace SPExtention
         }
 
         private const string FieldXmlFormat =
-            "<Field DisplayName='{0}' StaticName='{1}' Name='{1}' ID='{{{2}}}' Type='{3}' {4}>{5}</Field>"; 
-        private static SPField AddFieldToList(SPList spList, string type, string internalName, string displayName, string additionalAttr, string innerXml)
+            "<Field DisplayName='{0}' StaticName='{1}' Name='{1}' ID='{{{2}}}' Type='{3}' {4}>{5}</Field>";
+        private static SPField AddFieldToList(SPList spList, string type, string internalName, string displayName, string additionalAttr, string innerXml, bool defaultView, bool isRequired)
         {
+            if (isRequired)
+                additionalAttr += " Required = 'TRUE' ";
+
             var fieldXml = string.Format(FieldXmlFormat,
                                         !string.IsNullOrEmpty(displayName) ? displayName:internalName, 
                                         internalName, 
@@ -202,7 +205,7 @@ namespace SPExtention
                                         type, 
                                         additionalAttr,
                                         innerXml);
-            var strInternalName = spList.Fields.AddFieldAsXml(fieldXml, true, SPAddFieldOptions.AddFieldInternalNameHint);
+            var strInternalName = spList.Fields.AddFieldAsXml(fieldXml, defaultView, SPAddFieldOptions.AddFieldInternalNameHint);
             var field = spList.Fields.GetFieldByInternalName(strInternalName);
             field.Update();
             return field;
@@ -232,6 +235,8 @@ namespace SPExtention
                     var fieldType = prop.GetCustomAttribute<FieldTypeAttribute>();
                     var internalXml = prop.GetCustomAttribute<InternalFieldXmlAttribute>();
                     var additionalAttr = prop.GetCustomAttributes<AdditionalFieldAttrAttribute>();
+                    var toDefaultView = prop.GetCustomAttribute<DefaultViewAttribute>() != null;
+                    var isRequired = prop.GetCustomAttribute<RequiredAttribute>() != null;
                     if (fieldType == null) continue;
 
                     var additionalFieldAttr = additionalAttr as IList<AdditionalFieldAttrAttribute> ?? additionalAttr.ToList();
@@ -251,7 +256,9 @@ namespace SPExtention
                                         prop.Name,
                                         dispName != null ? dispName.Name : null, 
                                         attributes,
-                                        internalXml != null ? internalXml.InternalXml : string.Empty);
+                                        internalXml != null ? internalXml.InternalXml : string.Empty,
+                                        toDefaultView,
+                                        isRequired);
                     }
                     propNames.Add(prop.Name);
                 }
@@ -285,10 +292,10 @@ namespace SPExtention
             SPField spField = spList.Fields.TryGetFieldByStaticName(fieldInternalName);
             if (spField == null)
                 return new Exception(string.Format("Field with name {0} NOT exist", fieldInternalName));
-            return AddFieldAttribute(spList, spField, key, value);
+            return AddFieldAttribute(spField, key, value);
         }
 
-        private static object AddFieldAttribute(SPList spList, SPField spField, string key, string value)
+        private static object AddFieldAttribute(SPField spField, string key, string value)
         {
             try
             {

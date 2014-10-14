@@ -1,0 +1,1 @@
+d:\Source\Workspaces\SPExtention\WrapperGenerator\bin\Debug\WrapperGenerator.exe.config
