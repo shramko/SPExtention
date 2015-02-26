@@ -1,31 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿/*
+ Created by Aleksandr Shramko (ashramko@live.com)
+ */
+
+using System;
 using Microsoft.SharePoint;
 
 namespace SPExtention
 {
 
-    [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public class InternalNameAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public class InternalNameAttribute : Attribute
     {
-        private string name;
+        private readonly string _name;
         public InternalNameAttribute(string name)
         {
-            this.name = name;
+            _name = name;
         }
         public virtual string Name
         {
-            get { return name; }
+            get { return _name; }
         }
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public class DescriptionAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public class DescriptionAttribute : Attribute
     {
-        private string description;
+        private readonly string description;
         public DescriptionAttribute(string description)
         {
             this.description = description;
@@ -36,32 +36,32 @@ namespace SPExtention
         }
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public class DisplayNameAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public class DisplayNameAttribute : Attribute
     {
-        private string name;
+        private readonly string _name;
         public DisplayNameAttribute(string name)
         {
-            this.name = name;
+            _name = name;
         }
         public virtual string Name
         {
-            get { return name; }
+            get { return _name; }
         }
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public class FieldTypeAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public class FieldTypeAttribute : Attribute
     {
-        private string _fieldType;
+        private readonly string _fieldType;
         public FieldTypeAttribute(SPFieldType fieldType)
         {
-            this._fieldType = fieldType.ToString("G");
+            _fieldType = fieldType.ToString("G");
         }
 
         public FieldTypeAttribute(string customFieldTypeName)
         {
-            this._fieldType = customFieldTypeName;
+            _fieldType = customFieldTypeName;
         }
 
         public virtual string Type
@@ -70,15 +70,15 @@ namespace SPExtention
         }
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
-    public class AdditionalFieldAttrAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+    public class AdditionalFieldAttrAttribute : Attribute
     {
-        private string _attrName;
-        private string _value;
+        private readonly string _attrName;
+        private readonly string _value;
         public AdditionalFieldAttrAttribute(string attrName, string value)
         {
-            this._attrName = attrName;
-            this._value = value;
+            _attrName = attrName;
+            _value = value;
         }
         public virtual string AttributeName
         {
@@ -91,13 +91,13 @@ namespace SPExtention
         }
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public class InternalFieldXmlAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public class InternalFieldXmlAttribute : Attribute
     {
-        private string _internalFieldXml;
+        private readonly string _internalFieldXml;
         public InternalFieldXmlAttribute(string internalFieldXml)
         {
-            this._internalFieldXml = internalFieldXml;
+            _internalFieldXml = internalFieldXml;
         }
         public virtual string InternalXml
         {
@@ -106,27 +106,26 @@ namespace SPExtention
 
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public class DefaultViewAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public class DefaultViewAttribute : Attribute
     {
         public DefaultViewAttribute(){}
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    public class RequiredAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    public class RequiredAttribute : Attribute
     {
         public RequiredAttribute() { }
     }
-
-    //TODO:добавить в обработку 
-    [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    public class ContentTypeAttribute : System.Attribute
+    
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    public class ContentTypeAttribute : Attribute
     {
-        private string _contentTypeId;
+        private readonly string _contentTypeId;
 
         public ContentTypeAttribute(string contentTypeId)
         {
-            this._contentTypeId = contentTypeId;
+            _contentTypeId = contentTypeId;
         }
 
         public virtual string ContentTypeId

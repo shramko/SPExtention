@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.SharePoint;
@@ -8,7 +9,7 @@ using SPExtention;
 
 namespace Test.List
 {
-    [InternalName("PopRequestsList"), DisplayName("Popular requests"), ContentType("")]
+    [InternalName("PopRequestsList"), DisplayName("Popular requests")]
     public class TestSpList : SPListExtention<TestSpList>
     {
         public TestSpList(SPWeb spWeb)
@@ -16,27 +17,37 @@ namespace Test.List
         {
         }
 
+        public TestSpList() { }
+
         [DisplayName("Picture URL")]
         [FieldType(SPFieldType.Text)]
-        public string PictureUrl { get; private set; }
+        [DefaultView]
+        public static string PictureUrl { get; private set; }
 
         [DisplayName("TEst Link URL")]
         [FieldType(SPFieldType.Text)]
-        public string LinkUrl { get; private set; }
+        [DefaultView]
+        public static string LinkUrl { get; private set; }
 
         [DisplayName("Picture 123")]
         [FieldType(SPFieldType.Text)]
-        public string Picture { get; private set; }
+        [DefaultView]
+        public static string Picture { get; private set; }
         
         [DisplayName("Picture")]
-        [FieldType(SPFieldType.Text)]
-        public string Picture1 { get; private set; }
+        [FieldType(SPFieldType.Note)]
+        [AdditionalFieldAttr("NumLines", "4")]
+        public static string Picture1 { get; private set; }
+
+        [DisplayName("Tester")]
+        [FieldType(SPFieldType.Integer)]
+        [DefaultView]
+        public static string Tester { get; private set; }
     }
 
-    public class TSPList : SPListExtention<TSPList>
+    [InternalName("TestCT"), DisplayName("TestCT"), ContentType("0x010019DE394A3F40422A87F60769C59E3CED")]
+    public class CTList : SPListExtention<CTList>
     {
-        [DisplayName("Picture"),Required]
-        [FieldType(SPFieldType.Text)]
-        string Picture1 { get; set; }
+        public CTList(SPWeb spWeb) : base(spWeb) { }
     }
 }

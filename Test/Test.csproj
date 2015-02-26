@@ -18,6 +18,7 @@
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
     <SccProvider>SAK</SccProvider>
+    <ActiveDeploymentConfiguration>Upgrade Solution %28CKSDev%29</ActiveDeploymentConfiguration>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -74,6 +75,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="ContentTypes\ContentType1\SharePointProjectItem.spdata">
+      <SharePointProjectItemId>{3a081edd-04be-4261-a196-cafa86dcceb5}</SharePointProjectItemId>
+    </None>
     <None Include="Features\Site\Site.feature">
       <FeatureId>{b0c4639f-059b-451d-9eb6-9f7cc55ad63d}</FeatureId>
     </None>
@@ -84,14 +88,23 @@
     <None Include="Package\Package.Template.xml">
       <DependentUpon>Package.package</DependentUpon>
     </None>
+    <None Include="ContentTypes\SiteColumns\SharePointProjectItem.spdata">
+      <SharePointProjectItemId>{e8f67eba-5474-4100-b09b-c254cc48c50e}</SharePointProjectItemId>
+    </None>
     <None Include="TestSpLIstExtention\SharePointProjectItem.spdata">
       <SharePointProjectItemId>{62b3208e-fbfe-4026-a960-49c614f80336}</SharePointProjectItemId>
     </None>
     <None Include="TestSpLIstExtention\TestSpLIstExtention.webpart" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ContentTypes\ContentType1\Elements.xml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Features\Site\Site.Template.xml">
       <DependentUpon>Site.feature</DependentUpon>
+    </Content>
+    <Content Include="ContentTypes\SiteColumns\Elements.xml">
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="TestSpLIstExtention\Elements.xml" />
     <Content Include="TestSpLIstExtention\TestSpLIstExtention.ascx">

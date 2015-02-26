@@ -32,7 +32,14 @@ namespace Test.TestSpLIstExtention
         {
             var spWeb = SPContext.Current.Web;
             TestSpList tl = new TestSpList(spWeb);
+            
+            var list = tl.Create();
+            if (list is Exception)
+                lbl_Message.Text = (list as Exception).Message;
+            else
+                lbl_Message.Text = (list as SPList).Title;
 
+            lbl_Message.Text += CTList.Create(spWeb);
         }
 
         protected void btn_Update_OnClick(object sender, EventArgs e)
@@ -40,7 +47,22 @@ namespace Test.TestSpLIstExtention
             //TestSpList.UpdateFields(SPContext.Current.Web);
             TestSpList tl = new TestSpList(SPContext.Current.Web);
             SPList list = tl.GetSPList();
-            //list.Items[1][tl.PictureUrl] = "test";
+            if (list != null)
+            {
+                var r = TestSpList.UpdateFields(SPContext.Current.Web);
+                if(r!=null)
+                    lbl_Message.Text = (r as Exception).Message;
+                else
+                    lbl_Message.Text = "Update successfull";
+
+                lbl_Message.Text += TestSpList.LinkUrl + " ";
+                lbl_Message.Text += TestSpList.Picture + " ";
+                lbl_Message.Text += TestSpList.Picture1 + " ";
+                lbl_Message.Text += TestSpList.PictureUrl + " ";
+                lbl_Message.Text += TestSpList.Tester + " ";
+            }
+
+            CTList.UpdateFields(SPContext.Current.Web);
         }
     }
 }
