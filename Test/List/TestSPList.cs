@@ -12,8 +12,8 @@ namespace Test.List
     [InternalName("PopRequestsList"), DisplayName("Popular requests")]
     public class TestSpList : SPListExtention<TestSpList>
     {
-        public TestSpList(SPWeb spWeb)
-            : base(spWeb)
+        public TestSpList(SPWeb web)
+            : base(web)
         {
         }
 
@@ -48,6 +48,6 @@ namespace Test.List
     [InternalName("TestCT"), DisplayName("TestCT"), ContentType("0x010019DE394A3F40422A87F60769C59E3CED")]
     public class CTList : SPListExtention<CTList>
     {
-        public CTList(SPWeb spWeb) : base(spWeb) { }
+        public CTList(SPWeb web) : base(web) { }
     }
 }

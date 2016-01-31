@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Solution xmlns="http://schemas.microsoft.com/sharepoint/" SolutionId="fa9c0658-d28d-4dc0-8864-587c998300fd" SharePointProductVersion="15.0">
+  <Assemblies>
+    <Assembly Location="SPExtention.dll" DeploymentTarget="GlobalAssemblyCache">
+      <SafeControls>
+        <SafeControl Assembly="SPExtention" Namespace="SPExtention" TypeName="*" />
+      </SafeControls>
+    </Assembly>
+    <Assembly Location="Test.dll" DeploymentTarget="GlobalAssemblyCache">
+      <SafeControls>
+        <SafeControl Assembly="Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=acf3a3471d3f6c70" Namespace="Test.TestSpLIstExtention" TypeName="*" />
+      </SafeControls>
+    </Assembly>
+  </Assemblies>
+  <FeatureManifests>
+    <FeatureManifest Location="Test_Site\Feature.xml" />
+  </FeatureManifests>
+</Solution>

@@ -7,7 +7,6 @@ using Microsoft.SharePoint;
 
 namespace SPExtention
 {
-
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
     public class InternalNameAttribute : Attribute
     {
@@ -103,13 +102,12 @@ namespace SPExtention
         {
             get { return _internalFieldXml; }
         }
-
     }
 
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
     public class DefaultViewAttribute : Attribute
     {
-        public DefaultViewAttribute(){}
+        public DefaultViewAttribute() { }
     }
 
     [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
@@ -117,7 +115,7 @@ namespace SPExtention
     {
         public RequiredAttribute() { }
     }
-    
+
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public class ContentTypeAttribute : Attribute
     {

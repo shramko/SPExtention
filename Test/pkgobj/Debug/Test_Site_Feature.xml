@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Feature xmlns="http://schemas.microsoft.com/sharepoint/" Id="3ed0aad1-6134-4049-889f-83c0b18bd79a" ReceiverAssembly="Test, Version=1.0.0.0, Culture=neutral, PublicKeyToken=acf3a3471d3f6c70" ReceiverClass="Test.Features.Web.WebEventReceiver" Scope="Site" Title="Test SPExtention">
+  <ElementManifests>
+    <ElementManifest Location="TestSpLIstExtention\Elements.xml" />
+    <ElementFile Location="TestSpLIstExtention\TestSpLIstExtention.webpart" />
+    <ElementManifest Location="SiteColumns\Elements.xml" />
+    <ElementManifest Location="ContentType1\Elements.xml" />
+  </ElementManifests>
+</Feature>
