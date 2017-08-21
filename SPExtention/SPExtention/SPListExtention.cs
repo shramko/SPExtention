@@ -159,6 +159,18 @@ namespace SPExtention
             }
         }
 
+        public static string ContentTypeName
+        {
+            get
+            {
+                ContentTypeNameAttribute ct =
+                    (ContentTypeNameAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(ContentTypeNameAttribute));
+                if (ct != null)
+                    return ct.ContentTypeName;
+                return string.Empty;
+            }
+        }
+
         public static SPList Create(SPWeb spWeb)
         {
             if (spWeb == null)
@@ -274,21 +286,52 @@ namespace SPExtention
             return GetCustomFieldList(GetSPListByInternalOrDisplayName(spWeb));
         }
 
-        public static SPContentType SaveAsContentType(SPWeb spWeb, string groupName)
+        public static SPContentType CreateContentType(SPWeb spWeb, string groupName = "Custom Content Types")
         {
             SPContentType ct = null;
             bool ctIdExist = !string.IsNullOrEmpty(ContentTypeId);
 
             if (ctIdExist)
-                ct = spWeb.AvailableContentTypes[new SPContentTypeId(ContentTypeId)] ?? spWeb.AvailableContentTypes[ListInternalName];
+                ct = spWeb.AvailableContentTypes[new SPContentTypeId(ContentTypeId)] ?? spWeb.AvailableContentTypes[ContentTypeName];
 
             if (ct != null)
-                throw new Exception(string.Format("Content type with ID or name exist: {0}", string.IsNullOrEmpty(ContentTypeId) ? ListInternalName : ContentTypeId));
+                throw new Exception(string.Format("Content type with ID or name exist: {0}", string.IsNullOrEmpty(ContentTypeId) ? ContentTypeName : ContentTypeId));
 
-            ct = CreateSiteContentType(spWeb, ListInternalName, !string.IsNullOrEmpty(ContentTypeId) ? new SPContentTypeId(ContentTypeId) : SPBuiltInContentTypeId.Item, groupName);
+            //TODO:check below string for using SPBuiltInContentTypeId.Item
+            ct = CreateSiteContentType(spWeb, ContentTypeName, !string.IsNullOrEmpty(ContentTypeId) ? new SPContentTypeId(ContentTypeId) : SPBuiltInContentTypeId.Item, groupName);
+
             var siteColumns = CreateSiteColumns(spWeb);
             AddFieldsToContentType(spWeb, siteColumns, ct);
             return ct;
+        }
+
+        public static SPContentType UpdateContentType(SPWeb spWeb)
+        {
+            SPContentType ct = null;
+            bool ctIdExist = !string.IsNullOrEmpty(ContentTypeId);
+            if (ctIdExist)
+                ct = spWeb.AvailableContentTypes[new SPContentTypeId(ContentTypeId)] ?? spWeb.AvailableContentTypes[ContentTypeName];
+
+            var siteColumns = CreateSiteColumns(spWeb);
+            AddFieldsToContentType(spWeb, siteColumns, ct);
+            RemoveNotExistFieldsFromContentType(spWeb, siteColumns, ct);
+            return ct;
+        }
+
+        public static void CreateOrUpdateContentType(SPWeb spWeb)
+        {
+            SPContentType ct = null;
+            bool ctIdExist = !string.IsNullOrEmpty(ContentTypeId);
+            if (ctIdExist)
+                ct = spWeb.AvailableContentTypes[new SPContentTypeId(ContentTypeId)] ?? spWeb.AvailableContentTypes[ContentTypeName];
+            if (ct != null)
+            {
+                UpdateContentType(spWeb);
+            }
+            else
+            {
+                CreateContentType(spWeb);
+            }
         }
 
         #endregion
@@ -359,6 +402,18 @@ namespace SPExtention
         {
             foreach (SPField field in fields)
                 AddFieldToContentType(spWeb, contentType.Id, field);
+        }
+
+        private static void RemoveNotExistFieldsFromContentType(SPWeb spWeb, List<SPField> fields, SPContentType contentType)
+        {
+            SPContentType ct = spWeb.ContentTypes[contentType.Id];
+            foreach (SPField field in ct.Fields)
+            {
+                var n = field.InternalName;
+                if (fields.Exists(x => x.InternalName == field.InternalName)) continue;
+                ct.FieldLinks.Delete(field.InternalName);
+            }
+            ct.Update();
         }
 
         private static object AddListToWeb(SPWeb spWeb)
@@ -641,6 +696,16 @@ namespace SPExtention
         }
 
 
+        private static List<BaseFieldInfo> FieldsInfo
+        {
+            get
+            {
+                List<BaseFieldInfo> fi = new List<BaseFieldInfo>();
+                foreach (PropertyInfo prop in PropertyFields)
+                    fi.Add(new BaseFieldInfo(prop));
+                return fi;
+            }
+        }
         #endregion
 
         class BaseFieldInfo

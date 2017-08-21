@@ -142,7 +142,7 @@ namespace SPExtention
             _contentTypeName = contentTypeId;
         }
 
-        public virtual string ContentTypeId
+        public virtual string ContentTypeName
         {
             get { return _contentTypeName; }
         }
