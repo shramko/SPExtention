@@ -1,0 +1,5 @@
+C:\Users\Administrator\Documents\GitHub\SPExtention\SPExtention\SPExtention\bin\Debug\SPExtention.dll
+C:\Users\Administrator\Documents\GitHub\SPExtention\SPExtention\SPExtention\bin\Debug\SPExtention.pdb
+C:\Users\Administrator\Documents\GitHub\SPExtention\SPExtention\SPExtention\obj\Debug\SPExtention.csprojResolveAssemblyReference.cache
+C:\Users\Administrator\Documents\GitHub\SPExtention\SPExtention\SPExtention\obj\Debug\SPExtention.dll
+C:\Users\Administrator\Documents\GitHub\SPExtention\SPExtention\SPExtention\obj\Debug\SPExtention.pdb

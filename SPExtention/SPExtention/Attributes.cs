@@ -117,11 +117,11 @@ namespace SPExtention
     }
 
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    public class ContentTypeAttribute : Attribute
+    public class ContentTypeIdAttribute : Attribute
     {
         private readonly string _contentTypeId;
 
-        public ContentTypeAttribute(string contentTypeId)
+        public ContentTypeIdAttribute(string contentTypeId)
         {
             _contentTypeId = contentTypeId;
         }
@@ -129,6 +129,22 @@ namespace SPExtention
         public virtual string ContentTypeId
         {
             get { return _contentTypeId; }
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    public class ContentTypeNameAttribute : Attribute
+    {
+        private readonly string _contentTypeName;
+
+        public ContentTypeNameAttribute(string contentTypeId)
+        {
+            _contentTypeName = contentTypeId;
+        }
+
+        public virtual string ContentTypeId
+        {
+            get { return _contentTypeName; }
         }
     }
 }

@@ -45,7 +45,7 @@ namespace Test.List
         public static string Tester { get; private set; }
     }
 
-    [InternalName("TestCT"), DisplayName("TestCT"), ContentType("0x010019DE394A3F40422A87F60769C59E3CED")]
+    [InternalName("TestCT"), DisplayName("TestCT"), ContentTypeId("0x010019DE394A3F40422A87F60769C59E3CED")]
     public class CTList : SPListExtention<CTList>
     {
         public CTList(SPWeb web) : base(web) { }

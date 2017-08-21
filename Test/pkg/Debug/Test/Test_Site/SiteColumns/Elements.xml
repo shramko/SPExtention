@@ -24,4 +24,12 @@
      Required="FALSE"
      Group="Custom Site Columns">
   </Field>
+  <Field
+   ID="{9D62A56A-59C1-430B-8F7A-DD27CDAD0E44}"
+   Name="scolumn4"
+   DisplayName="Site Column 4"
+   Type="Text"
+   Required="FALSE"
+   Group="Custom Site Columns">
+  </Field>
 </Elements>

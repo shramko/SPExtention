@@ -10,7 +10,6 @@ using Microsoft.SharePoint;
 
 namespace SPExtention
 {
-    // ReSharper disable once InconsistentNaming
     public abstract class SPListExtention<T> where T : SPListExtention<T>
     {
         public readonly SPWeb Web;
@@ -36,7 +35,7 @@ namespace SPExtention
         protected SPListExtention(SPWeb web)
             : this()
         {
-            if(web == null)
+            if (web == null)
                 throw new Exception("SPListExtention: SPWeb is null");
             Web = web;
         }
@@ -147,13 +146,13 @@ namespace SPExtention
             }
 
         }
-        
+
         public static string ContentTypeId
         {
             get
             {
-                ContentTypeAttribute ct =
-                    (ContentTypeAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(ContentTypeAttribute));
+                ContentTypeIdAttribute ct =
+                    (ContentTypeIdAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(ContentTypeIdAttribute));
                 if (ct != null)
                     return ct.ContentTypeId;
                 return string.Empty;
@@ -173,6 +172,18 @@ namespace SPExtention
                 throw addLResult as Exception;
 
             return addLResult as SPList;
+        }
+
+        public static void CreateOrUpdate(SPWeb spWeb, bool removeOldFields = false)
+        {
+            if (GetSPListByInternalOrDisplayName(spWeb) == null)
+            {
+                var addLResult = AddListToWeb(spWeb);
+                if (addLResult is Exception)
+                    throw addLResult as Exception;
+            }
+            else
+                UpdateFields(spWeb, removeOldFields);
         }
 
         public static void Delete(SPWeb spWeb)
@@ -208,8 +219,8 @@ namespace SPExtention
             if (string.IsNullOrEmpty(ListInternalName))
                 return null;
             SPList spList = (from SPList l in spWeb.Lists
-                             where l.RootFolder.Name.Equals(ListInternalName, StringComparison.InvariantCulture)
-                             select l).FirstOrDefault();
+                where l.RootFolder.Name.Equals(ListInternalName, StringComparison.InvariantCulture)
+                select l).FirstOrDefault();
             return spList;
         }
 
@@ -241,9 +252,9 @@ namespace SPExtention
             SPList spList = GetSPListByInternalOrDisplayName(spWeb);
             if (spList == null)
                 throw new Exception(string.Format("SaveAsTemplate: Can't create template. List instance {0} {1} not found", ListInternalName, ListDisplayName));
-            
+
             string fileName = templateName.Replace(" ", "") + ".stp";
-            
+
             SPList gallery = spWeb.Lists["List Template Gallery"];
             foreach (SPListItem template in gallery.GetItems(new SPQuery()))
             {
@@ -263,7 +274,7 @@ namespace SPExtention
             return GetCustomFieldList(GetSPListByInternalOrDisplayName(spWeb));
         }
 
-        public static object SaveAsContentType(SPWeb spWeb)
+        public static SPContentType SaveAsContentType(SPWeb spWeb, string groupName)
         {
             SPContentType ct = null;
             bool ctIdExist = !string.IsNullOrEmpty(ContentTypeId);
@@ -272,9 +283,9 @@ namespace SPExtention
                 ct = spWeb.AvailableContentTypes[new SPContentTypeId(ContentTypeId)] ?? spWeb.AvailableContentTypes[ListInternalName];
 
             if (ct != null)
-                return new Exception(string.Format("Content type with ID or name exist: {0}", string.IsNullOrEmpty(ContentTypeId) ? ListInternalName : ContentTypeId));
+                throw new Exception(string.Format("Content type with ID or name exist: {0}", string.IsNullOrEmpty(ContentTypeId) ? ListInternalName : ContentTypeId));
 
-            ct = CreateSiteContentType(spWeb, ListInternalName, !string.IsNullOrEmpty(ContentTypeId) ? new SPContentTypeId(ContentTypeId) : SPBuiltInContentTypeId.Item, null);
+            ct = CreateSiteContentType(spWeb, ListInternalName, !string.IsNullOrEmpty(ContentTypeId) ? new SPContentTypeId(ContentTypeId) : SPBuiltInContentTypeId.Item, groupName);
             var siteColumns = CreateSiteColumns(spWeb);
             AddFieldsToContentType(spWeb, siteColumns, ct);
             return ct;
@@ -309,8 +320,9 @@ namespace SPExtention
             {
                 if (spWeb.AvailableContentTypes[contentTypeName] == null)
                 {
-                    SPContentType itemCType = spWeb.AvailableContentTypes[contentTypeId];
-                    SPContentType contentType = new SPContentType(itemCType, spWeb.ContentTypes, contentTypeName)
+                    //SPContentType itemCType = spWeb.AvailableContentTypes[contentTypeId];
+                    //SPContentType contentType = new SPContentType(itemCType, spWeb.ContentTypes, contentTypeName)
+                    SPContentType contentType = new SPContentType(contentTypeId, spWeb.ContentTypes, contentTypeName)
                     {
                         Group = groupName
                     };
@@ -346,9 +358,7 @@ namespace SPExtention
         private static void AddFieldsToContentType(SPWeb spWeb, List<SPField> fields, SPContentType contentType)
         {
             foreach (SPField field in fields)
-            {
                 AddFieldToContentType(spWeb, contentType.Id, field);
-            }
         }
 
         private static object AddListToWeb(SPWeb spWeb)
@@ -411,7 +421,7 @@ namespace SPExtention
         private static SPField CreateSiteColumn(SPWeb spWeb, BaseFieldInfo baseInfo)
         {
             if (spWeb.Fields.ContainsField(baseInfo.InternalName))
-                return spWeb.Fields[baseInfo.InternalName];
+                return spWeb.Fields.GetFieldByInternalName(baseInfo.InternalName);
 
             var fieldXml = GetFieldXml(baseInfo);
             var strInternalName = spWeb.Fields.AddFieldAsXml(fieldXml, baseInfo.DefaultView,
@@ -451,7 +461,7 @@ namespace SPExtention
             }
             else
             {
-                UpdateContentTypeListFields(spList, removeOldField);    
+                UpdateContentTypeListFields(spList, removeOldField);
             }
         }
 
@@ -610,14 +620,14 @@ namespace SPExtention
 
             spList.ContentTypes.Add(ct);
 
-            #warning try delete default CT
-            try 
+#warning try delete default CT
+            try
             {
-                SPContentTypeId listItemContentTypeId =
-                    spList.ContentTypes[spList.ParentWeb.ContentTypes[SPBuiltInContentTypeId.Item].Name].Id;
+                //var itemCTName = spList.ParentWeb.Site.RootWeb.ContentTypes[SPBuiltInContentTypeId.Item].Name;
+                SPContentTypeId listItemContentTypeId = spList.ContentTypes["Item"].Id;
                 spList.ContentTypes.Delete(listItemContentTypeId);
             }
-            catch { }
+            catch (Exception ex) { }
 
             spList.Update();
 
@@ -626,6 +636,7 @@ namespace SPExtention
             {
                 view.ViewFields.Add(field);
             }
+            view.ViewFields.Delete("LinkTitle");//delete Title from view
             view.Update();
         }
 
