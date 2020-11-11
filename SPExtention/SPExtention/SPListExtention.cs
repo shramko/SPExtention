@@ -16,7 +16,6 @@ namespace SPExtention
         private const string FieldXmlFormat = "<Field DisplayName='{0}' StaticName='{1}' Name='{1}' ID='{{{2}}}' Type='{3}' {4}>{5}</Field>";
 
         #region Constructor
-
         /// <summary>
         /// This constuctor sets string value to property = field internal name 
         /// </summary>
@@ -100,6 +99,7 @@ namespace SPExtention
             var l = GetSPListByInternalName(Web);
             if (l == null)
                 return Create(Web);
+            UpdateListInfo(Web);
             UpdateFields(Web, true);
             return l;
         }
@@ -171,6 +171,18 @@ namespace SPExtention
             }
         }
 
+        public static bool IsHiddenList
+        {
+            get
+            {
+                HiddenListAttribute hl =
+                    (HiddenListAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(HiddenListAttribute));
+                if (hl != null)
+                    return true;
+                return false;
+            }
+        }
+
         public static SPList Create(SPWeb spWeb)
         {
             if (spWeb == null)
@@ -186,16 +198,19 @@ namespace SPExtention
             return addLResult as SPList;
         }
 
-        public static void CreateOrUpdate(SPWeb spWeb, bool removeOldFields = false)
+        public static void CreateOrUpdate(SPWeb spWeb, bool removeOldFields = false, bool removeTitle = true)
         {
             if (GetSPListByInternalOrDisplayName(spWeb) == null)
             {
-                var addLResult = AddListToWeb(spWeb);
+                var addLResult = AddListToWeb(spWeb, removeTitle);
                 if (addLResult is Exception)
                     throw addLResult as Exception;
             }
             else
+            {
+                UpdateListInfo(spWeb);
                 UpdateFields(spWeb, removeOldFields);
+            }                
         }
 
         public static void Delete(SPWeb spWeb)
@@ -206,6 +221,18 @@ namespace SPExtention
             var spList = spWeb.Lists.TryGetList(ListDisplayName);
             if (spList != null)
                 spWeb.Lists.Delete(spList.ID);
+        }
+
+        public static void UpdateListInfo(SPWeb spWeb)
+        {
+            var spList = GetSPListByInternalName(spWeb);
+            if (spList == null)
+                throw new Exception("UpdateListInfo: list not found");
+
+            spList.Title = ListDisplayName;
+            spList.Hidden = IsHiddenList;
+            spList.Description = ListDescription;
+            spList.Update();
         }
 
         public static void UpdateFields(SPWeb spWeb, bool removeOldFields = false)
@@ -231,8 +258,8 @@ namespace SPExtention
             if (string.IsNullOrEmpty(ListInternalName))
                 return null;
             SPList spList = (from SPList l in spWeb.Lists
-                where l.RootFolder.Name.Equals(ListInternalName, StringComparison.InvariantCulture)
-                select l).FirstOrDefault();
+                             where l.RootFolder.Name.Equals(ListInternalName, StringComparison.InvariantCulture)
+                             select l).FirstOrDefault();
             return spList;
         }
 
@@ -286,7 +313,7 @@ namespace SPExtention
             return GetCustomFieldList(GetSPListByInternalOrDisplayName(spWeb));
         }
 
-        public static SPContentType CreateContentType(SPWeb spWeb, string groupName = "Custom Content Types")
+        public static SPContentType CreateContentType(SPWeb spWeb, bool deleteTitle = true, string groupName = "Custom Content Types")
         {
             SPContentType ct = null;
             bool ctIdExist = !string.IsNullOrEmpty(ContentTypeId);
@@ -301,11 +328,15 @@ namespace SPExtention
             ct = CreateSiteContentType(spWeb, ContentTypeName, !string.IsNullOrEmpty(ContentTypeId) ? new SPContentTypeId(ContentTypeId) : SPBuiltInContentTypeId.Item, groupName);
 
             var siteColumns = CreateSiteColumns(spWeb);
-            AddFieldsToContentType(spWeb, siteColumns, ct);
+            AddFieldsToContentType(spWeb, siteColumns, ct, false);
+
+            if (deleteTitle)
+                RemoveTitle(spWeb, ct.Id);
+
             return ct;
         }
 
-        public static SPContentType UpdateContentType(SPWeb spWeb)
+        public static SPContentType UpdateContentType(SPWeb spWeb, bool updateChild = true)
         {
             SPContentType ct = null;
             bool ctIdExist = !string.IsNullOrEmpty(ContentTypeId);
@@ -313,12 +344,13 @@ namespace SPExtention
                 ct = spWeb.AvailableContentTypes[new SPContentTypeId(ContentTypeId)] ?? spWeb.AvailableContentTypes[ContentTypeName];
 
             var siteColumns = CreateSiteColumns(spWeb);
-            AddFieldsToContentType(spWeb, siteColumns, ct);
-            RemoveNotExistFieldsFromContentType(spWeb, siteColumns, ct);
+
+            AddFieldsToContentType(spWeb, siteColumns, ct, updateChild);
+            RemoveNotExistFieldsFromContentType(spWeb, siteColumns, ct, updateChild);
             return ct;
         }
 
-        public static void CreateOrUpdateContentType(SPWeb spWeb)
+        public static void CreateOrUpdateContentType(SPWeb spWeb, bool updateChild = true, bool deleteTitle = true)
         {
             SPContentType ct = null;
             bool ctIdExist = !string.IsNullOrEmpty(ContentTypeId);
@@ -326,11 +358,11 @@ namespace SPExtention
                 ct = spWeb.AvailableContentTypes[new SPContentTypeId(ContentTypeId)] ?? spWeb.AvailableContentTypes[ContentTypeName];
             if (ct != null)
             {
-                UpdateContentType(spWeb);
+                UpdateContentType(spWeb, updateChild);
             }
             else
             {
-                CreateContentType(spWeb);
+                CreateContentType(spWeb, deleteTitle);
             }
         }
 
@@ -352,7 +384,8 @@ namespace SPExtention
             foreach (PropertyInfo prop in PropertyFields)
             {
                 BaseFieldInfo bfi = new BaseFieldInfo(prop);
-                listFields.Add(CreateSiteColumn(spWeb, bfi));
+                var siteColumn = CreateSiteColumn(spWeb, bfi);
+                listFields.Add(siteColumn);
             }
             return listFields;
         }
@@ -381,16 +414,19 @@ namespace SPExtention
             }
         }
 
-        private static void AddFieldToContentType(SPWeb spWeb, SPContentTypeId contentTypeId, SPField field)
+        private static void AddFieldToContentType(SPWeb spWeb, SPContentTypeId contentTypeId, SPField field, bool updateChild)
         {
             try
             {
                 SPContentType contentType = spWeb.ContentTypes[contentTypeId];
                 if (contentType == null) return;
-                if (contentType.Fields.ContainsField(field.Title)) return;
+                if (contentType.FieldLinks.Cast<SPFieldLink>().Any(x => x.Name == field.InternalName)) return;
+                field = spWeb.Fields.GetFieldByInternalName(field.InternalName);
                 SPFieldLink fieldLink = new SPFieldLink(field);
+                fieldLink.Hidden = false;
+                fieldLink.Required = field.Required;
                 contentType.FieldLinks.Add(fieldLink);
-                contentType.Update();
+                contentType.Update(updateChild);
             }
             catch (Exception ex)
             {
@@ -398,13 +434,13 @@ namespace SPExtention
             }
         }
 
-        private static void AddFieldsToContentType(SPWeb spWeb, List<SPField> fields, SPContentType contentType)
+        private static void AddFieldsToContentType(SPWeb spWeb, List<SPField> fields, SPContentType contentType, bool updateChild)
         {
             foreach (SPField field in fields)
-                AddFieldToContentType(spWeb, contentType.Id, field);
+                AddFieldToContentType(spWeb, contentType.Id, field, updateChild);
         }
 
-        private static void RemoveNotExistFieldsFromContentType(SPWeb spWeb, List<SPField> fields, SPContentType contentType)
+        private static void RemoveNotExistFieldsFromContentType(SPWeb spWeb, List<SPField> fields, SPContentType contentType, bool updateChild)
         {
             SPContentType ct = spWeb.ContentTypes[contentType.Id];
             foreach (SPField field in ct.Fields)
@@ -413,10 +449,10 @@ namespace SPExtention
                 if (fields.Exists(x => x.InternalName == field.InternalName)) continue;
                 ct.FieldLinks.Delete(field.InternalName);
             }
-            ct.Update();
+            ct.Update(updateChild);
         }
 
-        private static object AddListToWeb(SPWeb spWeb)
+        private static object AddListToWeb(SPWeb spWeb, bool removeTitle = true)
         {
             if (GetSPListByInternalName(spWeb) != null)
                 return new Exception(string.Format("AddListToWeb: List with internal name {0} exist", ListInternalName));
@@ -428,6 +464,7 @@ namespace SPExtention
                 Guid listGuid = spWeb.Lists.Add(ListInternalName, ListDescription, SPListTemplateType.GenericList);
                 SPList list = spWeb.Lists[listGuid];
                 list.Title = ListDisplayName;
+                list.Hidden = IsHiddenList;
                 list.Update();
 
                 if (!string.IsNullOrEmpty(ContentTypeId))
@@ -437,6 +474,14 @@ namespace SPExtention
                 else
                 {
                     AddFieldsToList(list);
+                }
+
+                if (removeTitle)
+                {
+                    SPField titleField = list.Fields[SPBuiltInFieldId.Title];
+                    titleField.Hidden = true;
+                    titleField.Required = false;
+                    titleField.Update(true);
                 }
                 return GetSPListByInternalName(spWeb);
             }
@@ -467,6 +512,10 @@ namespace SPExtention
         private static SPField AddFieldToList(SPList spList, BaseFieldInfo baseInfo)
         {
             var fieldXml = GetFieldXml(baseInfo);
+
+            if (baseInfo.FieldType == SPFieldType.Lookup.ToString("G"))
+                fieldXml = ParseLookupXml(fieldXml, spList.ParentWeb);
+
             var strInternalName = spList.Fields.AddFieldAsXml(fieldXml, baseInfo.DefaultView, SPAddFieldOptions.AddFieldInternalNameHint);
             var field = spList.Fields.GetFieldByInternalName(strInternalName);
             field.Update();
@@ -482,8 +531,59 @@ namespace SPExtention
             var strInternalName = spWeb.Fields.AddFieldAsXml(fieldXml, baseInfo.DefaultView,
                 SPAddFieldOptions.AddFieldInternalNameHint);
             var field = spWeb.Fields.GetFieldByInternalName(strInternalName);
+
+            if (baseInfo.FieldType == SPFieldType.Lookup.ToString("G"))
+                UpdateLookupField(spWeb, field);
+
             field.Update();
             return field;
+        }
+
+        private static void UpdateLookupField(SPWeb spWeb, SPField lookupField)
+        {
+            //SPField lookupField = spWeb.Fields.TryGetFieldByStaticName(baseInfo.InternalName);
+
+            if (lookupField != null)
+            {
+                var parsedXml = ParseLookupXml(lookupField.SchemaXml, spWeb);
+                lookupField.SchemaXml = parsedXml;
+            }
+        }
+
+        private static string ParseLookupXml(string fieldSchemaString, SPWeb spWeb)
+        {
+            // Getting Schema of field
+            XDocument fieldSchema = XDocument.Parse(fieldSchemaString);
+            // Get the root element of the field definition
+            XElement root = fieldSchema.Root;
+            // Check if list definition exits exists
+            if (root.Attribute("List") != null)
+            {
+                // Getting value of list url
+                string listurl = root.Attribute("List").Value;
+
+                // Get the correct folder for the list
+                SPFolder listFolder = spWeb.GetFolder(listurl);
+                if (listFolder != null && listFolder.Exists == true)
+                {
+                    // Setting the list id of the schema
+                    XAttribute attrList = root.Attribute("List");
+                    if (attrList != null)
+                    {
+                        // Replace the url wit the id
+                        attrList.Value = listFolder.ParentListId.ToString();
+                    }
+
+                    // Setting the souce id of the schema
+                    XAttribute attrWeb = root.Attribute("SourceID");
+                    if (attrWeb != null)
+                    {
+                        // Replace the sourceid with the correct webid
+                        attrWeb.Value = spWeb.ID.ToString();
+                    }
+                }
+            }
+            return fieldSchema.ToString();
         }
 
         private static string GetFieldXml(BaseFieldInfo baseInfo)
@@ -495,6 +595,12 @@ namespace SPExtention
                 baseInfo.FieldType,
                 baseInfo.Requred ? baseInfo.AdditionalAttributeString + " Required = 'TRUE' " : baseInfo.AdditionalAttributeString,
                 baseInfo.XmlAttribute);
+        }
+
+        private static string EscapeXMLValue(string xmlString)
+        {
+            if (string.IsNullOrWhiteSpace(xmlString)) return xmlString;
+            return xmlString.Replace("'", "&apos;").Replace("\"", "&quot;").Replace(">", "&gt;").Replace("<", "&lt;").Replace("&", "&amp;");
         }
 
         private static string GetAdditionalAttributesString(IEnumerable<AdditionalFieldAttrAttribute> additionalFieldAttr)
@@ -516,7 +622,8 @@ namespace SPExtention
             }
             else
             {
-                UpdateContentTypeListFields(spList, removeOldField);
+                //todo:this dont requred when CT updated with updateChild
+                //UpdateContentTypeListFields(spList, removeOldField);
             }
         }
 
@@ -583,7 +690,7 @@ namespace SPExtention
                     {
                         listContentType.FieldLinks.Delete(field.Id);
                         listContentType.Update();
-                        if (removeOldField) spList.Fields[field.Id].Delete();
+                        //if (removeOldField) spList.Fields[field.Id].Delete();
                     }
                 }
                 spList.Update();
@@ -625,7 +732,10 @@ namespace SPExtention
                 else
                     tabAttribute.Value = value;
             }
-            spField.SchemaXml = fieldSchema.ToString();
+            if (spField.Type == SPFieldType.Lookup)
+                spField.SchemaXml = ParseLookupXml(fieldSchema.ToString(), spField.ParentList.ParentWeb);
+            else
+                spField.SchemaXml = fieldSchema.ToString();
             spField.PushChangesToLists = true;
             spField.Update();
         }
@@ -674,8 +784,6 @@ namespace SPExtention
                 return;
 
             spList.ContentTypes.Add(ct);
-
-#warning try delete default CT
             try
             {
                 //var itemCTName = spList.ParentWeb.Site.RootWeb.ContentTypes[SPBuiltInContentTypeId.Item].Name;
@@ -695,6 +803,15 @@ namespace SPExtention
             view.Update();
         }
 
+        private static void RemoveTitle(SPWeb spWeb, SPContentTypeId contentTypeId)
+        {
+            SPContentType contentType = spWeb.ContentTypes[contentTypeId];
+            if (contentType.FieldLinks.Cast<SPFieldLink>().Any(x => x.Id == SPBuiltInFieldId.Title))
+            {
+                contentType.FieldLinks.Delete(SPBuiltInFieldId.Title);
+                contentType.Update();
+            }
+        }
 
         private static List<BaseFieldInfo> FieldsInfo
         {
@@ -718,6 +835,7 @@ namespace SPExtention
             public IList<AdditionalFieldAttrAttribute> AdditionalAttributes { get; private set; }
             public bool DefaultView { get; private set; }
             public bool Requred { get; private set; }
+
 
             public BaseFieldInfo(PropertyInfo fieldsProperty)
             {

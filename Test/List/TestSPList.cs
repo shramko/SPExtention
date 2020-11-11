@@ -15,9 +15,7 @@ namespace Test.List
         public TestSpList(SPWeb web)
             : base(web)
         {
-        }
-
-        public TestSpList() { }
+        }        
 
         [DisplayName("Picture URL")]
         [FieldType(SPFieldType.Text)]

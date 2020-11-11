@@ -32,10 +32,10 @@ namespace Test.TestSpLIstExtention
         {
             var spWeb = SPContext.Current.Web;
             TestSpList tl = new TestSpList(spWeb);
-            var list = tl.Create();
+            var list = tl.CreateOrUpdate();
             lbl_Message.Text = list.Title;
 
-            lbl_Message.Text += " " + CTList.Create(spWeb);
+            CTList.CreateOrUpdate(spWeb);
         }
 
         protected void btn_Update_OnClick(object sender, EventArgs e)

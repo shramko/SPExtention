@@ -147,4 +147,10 @@ namespace SPExtention
             get { return _contentTypeName; }
         }
     }
+
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    public class HiddenListAttribute : Attribute
+    {
+        public HiddenListAttribute() { }
+    }
 }
