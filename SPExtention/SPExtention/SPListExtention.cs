@@ -10,10 +10,11 @@ using Microsoft.SharePoint;
 
 namespace SPExtention
 {
-    public abstract class SPListExtention<T> where T : SPListExtention<T>
+    public abstract class SPListExtention<T> where T : SPListExtention<T>, new()
     {
         public readonly SPWeb Web;
-        private const string FieldXmlFormat = "<Field DisplayName='{0}' StaticName='{1}' Name='{1}' ID='{{{2}}}' Type='{3}' {4}>{5}</Field>";
+        private const string FIELD_XML_FORMAT = "<Field DisplayName='{0}' StaticName='{1}' Name='{1}' ID='{{{2}}}' Type='{3}' {4}>{5}</Field>";
+        private const string VIEW_FIELD_XML_FORMAT = "<FieldRef Name = '{0}' />";
 
         #region Constructor
         /// <summary>
@@ -366,6 +367,50 @@ namespace SPExtention
             }
         }
 
+
+        /// <summary>
+        /// In progress...
+        /// </summary>
+        /// <returns></returns>
+        public static List<T> GetAllListItems(SPWeb spWeb)
+        {
+            var result = new List<T>();
+            List<SPListItem> returnedItemsList = new List<SPListItem>();
+
+
+            var spList = GetSPListByInternalName(spWeb);
+            if (spList == null)
+                throw new Exception("GetListItems: list is null");
+            
+
+            StringBuilder viewFields = new StringBuilder();
+            foreach(PropertyInfo field in PropertyFields)            
+                viewFields.AppendFormat(VIEW_FIELD_XML_FORMAT, field.Name);
+
+            SPListItemCollectionPosition listItemCollectionPosition = new SPListItemCollectionPosition(string.Empty);
+            SPQuery query = new SPQuery();
+            query.RowLimit = 2000; //the recommended 2000 MaxRowLimit for SPQuery
+            query.ViewFields = viewFields.ToString();
+            do
+            {
+                query.ListItemCollectionPosition = listItemCollectionPosition;
+                SPListItemCollection items = spList.GetItems(query);
+                returnedItemsList.AddRange(items.Cast<SPListItem>().Select(i => i));
+                listItemCollectionPosition = items.ListItemCollectionPosition;
+            }
+            while (listItemCollectionPosition != null);
+
+            foreach(var listItem in returnedItemsList)
+            {
+                var t = new T();
+                foreach (PropertyInfo prop in PropertyFields)                
+                    prop.SetValue(t, ObjectToString(listItem[prop.Name]));
+                result.Add(t);
+            }
+
+            return result;
+        }
+
         #endregion
 
         #region Private
@@ -588,7 +633,7 @@ namespace SPExtention
 
         private static string GetFieldXml(BaseFieldInfo baseInfo)
         {
-            return string.Format(FieldXmlFormat,
+            return string.Format(FIELD_XML_FORMAT,
                 !string.IsNullOrEmpty(baseInfo.DisplayName) ? baseInfo.DisplayName : baseInfo.InternalName,
                 baseInfo.InternalName,
                 Guid.NewGuid(),
@@ -822,6 +867,11 @@ namespace SPExtention
                     fi.Add(new BaseFieldInfo(prop));
                 return fi;
             }
+        }
+
+        private static string ObjectToString(object obj)
+        {
+            return obj == null ? "" : obj.ToString();
         }
         #endregion
 

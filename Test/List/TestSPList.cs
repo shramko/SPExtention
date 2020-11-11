@@ -9,43 +9,52 @@ using SPExtention;
 
 namespace Test.List
 {
-    [InternalName("PopRequestsList"), DisplayName("Popular requests")]
+    [InternalName("PopRequestsList123"), DisplayName("Popular requests 123")]
     public class TestSpList : SPListExtention<TestSpList>
     {
         public TestSpList(SPWeb web)
             : base(web)
         {
-        }        
+        }
+
+        public TestSpList()
+        {
+
+        }
 
         [DisplayName("Picture URL")]
         [FieldType(SPFieldType.Text)]
         [DefaultView]
-        public static string PictureUrl { get; private set; }
+        public string PictureUrl { get; private set; }
 
         [DisplayName("TEst Link URL")]
         [FieldType(SPFieldType.Text)]
         [DefaultView]
-        public static string LinkUrl { get; private set; }
+        public string LinkUrl { get; private set; }
 
         [DisplayName("Picture 123")]
         [FieldType(SPFieldType.Text)]
         [DefaultView]
-        public static string Picture { get; private set; }
+        public string Picture { get; private set; }
         
         [DisplayName("Picture")]
         [FieldType(SPFieldType.Note)]
         [AdditionalFieldAttr("NumLines", "4")]
-        public static string Picture1 { get; private set; }
+        public string Picture1 { get; private set; }
 
         [DisplayName("Tester")]
         [FieldType(SPFieldType.Integer)]
         [DefaultView]
-        public static string Tester { get; private set; }
+        public string Tester { get; private set; }
     }
 
     [InternalName("TestCT"), DisplayName("TestCT"), ContentTypeId("0x010019DE394A3F40422A87F60769C59E3CED")]
     public class CTList : SPListExtention<CTList>
     {
         public CTList(SPWeb web) : base(web) { }
+        public CTList()
+        {
+
+        }
     }
 }

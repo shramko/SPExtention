@@ -40,19 +40,12 @@ namespace Test.TestSpLIstExtention
 
         protected void btn_Update_OnClick(object sender, EventArgs e)
         {
-            //TestSpList.UpdateFields(SPContext.Current.Web);
-            //TestSpList tl = new TestSpList(SPContext.Current.Web);
-            //SPList list = tl.GetSPListByInternalOrDisplayName();
-            //if (list != null)
-            //{
-            //    var r = TestSpList.UpdateFields(SPContext.Current.Web);
-            //    if(r!=null)
-            //        lbl_Message.Text = (r as Exception).Message;
-            //    else
-            //        lbl_Message.Text = "Update successfull";
-            //}
+            var r = TestSpList.GetAllListItems(SPContext.Current.Web);
 
-            CTList.UpdateFields(SPContext.Current.Web);
+            foreach(var x in r)
+            {
+                lbl_Message.Text += x.LinkUrl + " | ";
+            }
         }
     }
 }
