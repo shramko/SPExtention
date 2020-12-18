@@ -1,7 +1,9 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Web.UI.WebControls.WebParts;
 using Microsoft.SharePoint;
+using SPExtention;
 using Test.List;
 
 namespace Test.TestSpLIstExtention
@@ -30,21 +32,25 @@ namespace Test.TestSpLIstExtention
 
         protected void btn_Create_OnClick(object sender, EventArgs e)
         {
-            var spWeb = SPContext.Current.Web;
-            TestSpList tl = new TestSpList(spWeb);
-            var list = tl.CreateOrUpdate();
-            lbl_Message.Text = list.Title;
+            var testList = TestSpList.CreateOrUpdate(SPContext.Current.Web);
+            lbl_Message.Text = testList.Title;
 
-            CTList.CreateOrUpdate(spWeb);
+            var ctList = CTList.CreateOrUpdate(SPContext.Current.Web);
+            var items = ctList.GetItems();
+
+            ctList.AddItem(new DefaultListItem { 
+                Title = "item-" + items.Count()
+            });
         }
 
         protected void btn_Update_OnClick(object sender, EventArgs e)
         {
-            var r = TestSpList.GetAllListItems(SPContext.Current.Web);
+            var testList = TestSpList.GetExisting(SPContext.Current.Web);
+            var items = testList.GetItems();
 
-            foreach(var x in r)
+            foreach (var item in items)
             {
-                lbl_Message.Text += x.LinkUrl + " | ";
+                lbl_Message.Text += item.LinkUrl + " | ";
             }
         }
     }
